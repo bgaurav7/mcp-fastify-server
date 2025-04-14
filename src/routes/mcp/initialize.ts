@@ -1,7 +1,12 @@
 import { FastifyInstance } from 'fastify'
 import { InitializeRequest, InitializeResult, JSONRPC_VERSION } from '../../modelcontextprotocol/schema'
 
-to
+interface InitializeRPC {
+    jsonrpc: '2.0'
+    id: string | number
+    method: 'initialize'
+    params: InitializeRequest['params']
+}
 
 export default async function registerInitializeRoute(fastify: FastifyInstance) {
   fastify.post('/mcp/initialize', async (request, reply) => {
