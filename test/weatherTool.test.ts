@@ -15,28 +15,96 @@ afterAll(async () => {
   await server.close()
 })
 
-describe('Weather Tool API', () => {
-  it('should return weather info for a city', async () => {
-    process.env.OPENWEATHER_API_KEY = 'your_test_api_key_here' // Replace this with a real key
-
-    const response = await server.inject({
-      method: 'POST',
-      url: '/mcp/tools/call',
-      payload: {
-        jsonrpc: '2.0',
-        id: 1,
-        method: 'tools/call',
-        params: {
-          name: 'getWeather',
-          arguments: {
-            city: 'London'
+describe('Weather Tool API - Error Scenarios', () => {
+    it('should return 400 for invalid method', async () => {
+      const response = await server.inject({
+          method: 'POST',
+          url: '/mcp/tools/call',
+          payload: {
+              jsonrpc: '2.0',
+              id: 1,
+              method: 'invalid/method',
+              params: {
+                  name: 'getWeather',
+                  arguments: {
+                      city: 'London'
+                  }
+              }
           }
-        }
-      }
+      })
+
+      expect(response.statusCode).toBe(400)
+      const json = JSON.parse(response.body)
+      expect(json.error).toBe('Invalid method or tool')
     })
 
-    expect(response.statusCode).toBe(200)
-    const json = JSON.parse(response.body)
-    expect(json.result.content[0].text).toMatch(/temperature in London/i)
-  })
+    it('should return 400 for invalid tool name', async () => {
+      const response = await server.inject({
+          method: 'POST',
+          url: '/mcp/tools/call',
+          payload: {
+              jsonrpc: '2.0',
+              id: 1,
+              method: 'tools/call',
+              params: {
+                  name: 'invalidTool',
+                  arguments: {
+                      city: 'London'
+                  }
+              }
+          }
+      })
+
+      expect(response.statusCode).toBe(400)
+      const json = JSON.parse(response.body)
+      expect(json.error).toBe('Invalid method or tool')
+    })
+
+    it('should return 500 if API key is missing', async () => {
+      delete process.env.OPENWEATHER_API_KEY
+
+      const response = await server.inject({
+          method: 'POST',
+          url: '/mcp/tools/call',
+          payload: {
+              jsonrpc: '2.0',
+              id: 1,
+              method: 'tools/call',
+              params: {
+                  name: 'getWeather',
+                  arguments: {
+                      city: 'London'
+                  }
+              }
+          }
+      })
+
+      expect(response.statusCode).toBe(500)
+      const json = JSON.parse(response.body)
+      expect(json.error).toBe('API key missing')
+    })
+
+    it('should return 500 if weather API request fails', async () => {
+      process.env.OPENWEATHER_API_KEY = 'invalid_api_key'
+
+      const response = await server.inject({
+          method: 'POST',
+          url: '/mcp/tools/call',
+          payload: {
+              jsonrpc: '2.0',
+              id: 1,
+              method: 'tools/call',
+              params: {
+                  name: 'getWeather',
+                  arguments: {
+                      city: 'InvalidCity'
+                  }
+              }
+          }
+      })
+
+      expect(response.statusCode).toBe(500)
+      const json = JSON.parse(response.body)
+      expect(json.error).toBe('Failed to fetch weather')
+    })
 })

@@ -10,11 +10,16 @@ interface InitializeRPC {
 
 export default async function registerInitializeRoute(fastify: FastifyInstance) {
   fastify.post('/mcp/initialize', async (request, reply) => {
-    const body = request.body as InitializeRPC
+    console.debug('Received request at /mcp/initialize', { body: request.body });
+
+    const body = request.body as InitializeRPC;
 
     if (body?.method !== 'initialize' || !body?.params?.protocolVersion) {
-      return reply.status(400).send({ error: 'Invalid InitializeRequest' })
+      console.warn('Invalid InitializeRequest', { method: body?.method, protocolVersion: body?.params?.protocolVersion });
+      return reply.status(400).send({ error: 'Invalid InitializeRequest' });
     }
+
+    console.debug('Valid InitializeRequest received', { protocolVersion: body.params.protocolVersion });
 
     const result: InitializeResult = {
       protocolVersion: body.params.protocolVersion,
@@ -24,8 +29,10 @@ export default async function registerInitializeRoute(fastify: FastifyInstance) 
         tools: { listChanged: true },
       },
       serverInfo: { name: 'MCP Fastify Server', version: '1.0.0' }
-    }
+    };
 
-    return reply.send({ jsonrpc: JSONRPC_VERSION, id: body.id ?? 'init-1', result })
-  })
+    console.debug('Constructed InitializeResult', { result });
+
+    return reply.send({ jsonrpc: JSONRPC_VERSION, id: body.id ?? 'init-1', result });
+  });
 }

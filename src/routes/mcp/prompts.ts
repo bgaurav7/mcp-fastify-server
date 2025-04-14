@@ -8,10 +8,18 @@ interface PromptsRPC {
     params: ListPromptsRequest['params']
 }
 
-  
 export default async function registerPromptsRoute(fastify: FastifyInstance) {
   fastify.post('/mcp/prompts/list', async (request, reply) => {
-    const body = request.body as PromptsRPC
+    console.debug('Received request at /mcp/prompts/list', { body: request.body });
+
+    const body = request.body as PromptsRPC;
+
+    if (body?.method !== 'prompts/list') {
+      console.warn('Invalid PromptsRequest', { method: body?.method });
+      return reply.status(400).send({ error: 'Invalid PromptsRequest' });
+    }
+
+    console.debug('Valid PromptsRequest received', { method: body.method });
 
     const result: ListPromptsResult = {
       prompts: [{
@@ -19,8 +27,10 @@ export default async function registerPromptsRoute(fastify: FastifyInstance) {
         description: 'Welcome message prompt',
         arguments: [{ name: 'userName', required: true }]
       }]
-    }
+    };
 
-    return reply.send({ jsonrpc: JSONRPC_VERSION, id: body.id ?? 'prompts-1', result })
-  })
+    console.debug('Constructed ListPromptsResult', { result });
+
+    return reply.send({ jsonrpc: JSONRPC_VERSION, id: body.id ?? 'prompts-1', result });
+  });
 }

@@ -10,7 +10,16 @@ interface ResourcesRPC {
   
 export default async function registerResourcesRoute(fastify: FastifyInstance) {
   fastify.post('/mcp/resources/list', async (request, reply) => {
-    const body = request.body as ResourcesRPC
+    console.debug('Received request at /mcp/resources/list', { body: request.body });
+
+    const body = request.body as ResourcesRPC;
+
+    if (body?.method !== 'resources/list') {
+      console.warn('Invalid ResourcesRequest', { method: body?.method });
+      return reply.status(400).send({ error: 'Invalid ResourcesRequest' });
+    }
+
+    console.debug('Valid ResourcesRequest received', { method: body.method });
 
     const result: ListResourcesResult = {
       resources: [{
@@ -19,8 +28,10 @@ export default async function registerResourcesRoute(fastify: FastifyInstance) {
         description: 'A sample resource',
         mimeType: 'text/markdown'
       }]
-    }
+    };
 
-    return reply.send({ jsonrpc: JSONRPC_VERSION, id: body.id ?? 'resources-1', result })
-  })
+    console.debug('Constructed ListResourcesResult', { result });
+
+    return reply.send({ jsonrpc: JSONRPC_VERSION, id: body.id ?? 'resources-1', result });
+  });
 }

@@ -10,7 +10,16 @@ interface ToolsRPC {
   
 export default async function registerToolsRoute(fastify: FastifyInstance) {
   fastify.post('/mcp/tools/list', async (request, reply) => {
-    const body = request.body as ToolsRPC
+    console.debug('Received request at /mcp/tools/list', { body: request.body });
+
+    const body = request.body as ToolsRPC;
+
+    if (body?.method !== 'tools/list') {
+      console.warn('Invalid ToolsRequest', { method: body?.method });
+      return reply.status(400).send({ error: 'Invalid ToolsRequest' });
+    }
+
+    console.debug('Valid ToolsRequest received', { method: body.method });
 
     const result: ListToolsResult = {
       tools: [{
@@ -22,8 +31,10 @@ export default async function registerToolsRoute(fastify: FastifyInstance) {
           required: ['city']
         }
       }]
-    }
+    };
 
-    return reply.send({ jsonrpc: JSONRPC_VERSION, id: body.id ?? 'tools-1', result })
-  })
+    console.debug('Constructed ListToolsResult', { result });
+
+    return reply.send({ jsonrpc: JSONRPC_VERSION, id: body.id ?? 'tools-1', result });
+  });
 }
